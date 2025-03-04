@@ -53,6 +53,7 @@ export const insertSheetSchema = createInsertSchema(sheets).extend({
 });
 
 export const insertAttemptSchema = createInsertSchema(attempts).extend({
+  sheetId: z.number(),
   answers: z.array(z.object({
     questionId: z.number(),
     selectedOption: z.number().min(0).max(3)

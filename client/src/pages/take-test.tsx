@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { Sheet, type InsertAttempt, type Answer } from "@shared/schema";
+import { Sheet, type Answer } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -25,21 +25,31 @@ export default function TakeTest() {
   const startMutation = useMutation({
     mutationFn: async () => {
       if (!sheet) return;
+
       const initialAnswers = sheet.questions.map(q => ({
         questionId: q.id,
         selectedOption: 0 as 0 | 1 | 2 | 3
       }));
+
       setAnswers(initialAnswers);
 
       const res = await apiRequest("POST", "/api/attempts", {
         sheetId: sheet.id,
-        answers: initialAnswers,
-        startTime: new Date()
+        answers: initialAnswers
       });
-      return res.json();
+
+      const data = await res.json();
+      return data;
     },
     onSuccess: (data) => {
       setAttemptId(data.id);
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to start the test. Please try again."
+      });
     }
   });
 
@@ -99,7 +109,12 @@ export default function TakeTest() {
             Time limit: {sheet.timeLimit} minutes<br />
             Marks: +{sheet.correctMarks} for correct, -{sheet.negativeMarks} for incorrect
           </p>
-          <Button onClick={() => startMutation.mutate()}>Start Test</Button>
+          <Button 
+            onClick={() => startMutation.mutate()}
+            disabled={startMutation.isPending}
+          >
+            Start Test
+          </Button>
         </CardContent>
       </Card>
     );

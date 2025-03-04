@@ -36,13 +36,16 @@ export async function registerRoutes(app: Express) {
   // Attempt routes
   app.post("/api/attempts", async (req, res) => {
     try {
-      const attempt = insertAttemptSchema.parse(req.body);
-      const result = await storage.createAttempt({
-        ...attempt,
+      const attempt = insertAttemptSchema.parse({
+        ...req.body,
         startTime: new Date(),
+        endTime: null
       });
+
+      const result = await storage.createAttempt(attempt);
       res.json(result);
     } catch (error) {
+      console.error("Attempt creation error:", error);
       res.status(400).json({ error: "Invalid attempt data" });
     }
   });
@@ -63,6 +66,12 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       res.status(400).json({ error: "Invalid update data" });
     }
+  });
+
+  app.get("/api/attempts/:id", async (req, res) => {
+    const attempt = await storage.getAttempt(Number(req.params.id));
+    if (!attempt) return res.status(404).json({ error: "Attempt not found" });
+    res.json(attempt);
   });
 
   // Image analysis route
