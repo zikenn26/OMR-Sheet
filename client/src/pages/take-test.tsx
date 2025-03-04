@@ -47,23 +47,23 @@ export default function TakeTest() {
 
   const handleStart = () => {
     if (!sheet) return;
+    // Initialize empty answers array for all questions
+    const initialAnswers = sheet.questions.map(q => ({
+      questionId: q.id,
+      selectedOption: 0 as 0 | 1 | 2 | 3
+    }));
+    setAnswers(initialAnswers);
     startMutation.mutate({
       sheetId: sheet.id,
-      answers: [],
+      answers: initialAnswers,
       startTime: new Date()
     });
   };
 
   const handleAnswer = (questionId: number, selectedOption: number) => {
-    setAnswers(prev => {
-      const existing = prev.findIndex(a => a.questionId === questionId);
-      if (existing !== -1) {
-        return prev.map(a => 
-          a.questionId === questionId ? { ...a, selectedOption } : a
-        );
-      }
-      return [...prev, { questionId, selectedOption }];
-    });
+    setAnswers(prev => 
+      prev.map(a => a.questionId === questionId ? { ...a, selectedOption: selectedOption as 0 | 1 | 2 | 3 } : a)
+    );
   };
 
   if (isLoading) {
@@ -100,7 +100,8 @@ export default function TakeTest() {
           <p className="mb-4">{sheet.description}</p>
           <p className="text-muted-foreground mb-6">
             Questions: {sheet.startIndex} - {sheet.endIndex}<br />
-            Time limit: {sheet.timeLimit} minutes
+            Time limit: {sheet.timeLimit} minutes<br />
+            Marks: +{sheet.correctMarks} for correct, -{sheet.negativeMarks} for incorrect
           </p>
           <Button onClick={handleStart}>Start Test</Button>
         </CardContent>
@@ -157,7 +158,7 @@ export default function TakeTest() {
       <Button
         className="w-full"
         onClick={() => submitMutation.mutate()}
-        disabled={submitMutation.isPending || answers.length !== sheet.questions.length}
+        disabled={submitMutation.isPending}
       >
         Submit Test
       </Button>
