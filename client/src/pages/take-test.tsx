@@ -23,8 +23,19 @@ export default function TakeTest() {
   });
 
   const startMutation = useMutation({
-    mutationFn: async (data: InsertAttempt) => {
-      const res = await apiRequest("POST", "/api/attempts", data);
+    mutationFn: async () => {
+      if (!sheet) return;
+      const initialAnswers = sheet.questions.map(q => ({
+        questionId: q.id,
+        selectedOption: 0 as 0 | 1 | 2 | 3
+      }));
+      setAnswers(initialAnswers);
+
+      const res = await apiRequest("POST", "/api/attempts", {
+        sheetId: sheet.id,
+        answers: initialAnswers,
+        startTime: new Date()
+      });
       return res.json();
     },
     onSuccess: (data) => {
@@ -44,21 +55,6 @@ export default function TakeTest() {
       setLocation(`/results/${data.id}`);
     }
   });
-
-  const handleStart = () => {
-    if (!sheet) return;
-    // Initialize empty answers array for all questions
-    const initialAnswers = sheet.questions.map(q => ({
-      questionId: q.id,
-      selectedOption: 0 as 0 | 1 | 2 | 3
-    }));
-    setAnswers(initialAnswers);
-    startMutation.mutate({
-      sheetId: sheet.id,
-      answers: initialAnswers,
-      startTime: new Date()
-    });
-  };
 
   const handleAnswer = (questionId: number, selectedOption: number) => {
     setAnswers(prev => 
@@ -103,7 +99,7 @@ export default function TakeTest() {
             Time limit: {sheet.timeLimit} minutes<br />
             Marks: +{sheet.correctMarks} for correct, -{sheet.negativeMarks} for incorrect
           </p>
-          <Button onClick={handleStart}>Start Test</Button>
+          <Button onClick={() => startMutation.mutate()}>Start Test</Button>
         </CardContent>
       </Card>
     );
