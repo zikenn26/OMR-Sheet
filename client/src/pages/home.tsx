@@ -41,29 +41,44 @@ export default function Home() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {sheets.map((sheet) => (
-        <Card key={sheet.id}>
-          <CardHeader>
-            <CardTitle>{sheet.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-4">{sheet.description}</p>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center text-muted-foreground">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>{sheet.timeLimit} minutes</span>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Available Tests</h1>
+        <Link href="/create">
+          <Button>
+            Create New Test
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {sheets.map((sheet) => (
+          <Card key={sheet.id}>
+            <CardHeader>
+              <CardTitle>{sheet.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">{sheet.description}</p>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>{sheet.timeLimit} minutes</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Questions: {sheet.startIndex} - {sheet.endIndex}<br />
+                  Marks: +{sheet.correctMarks} for correct, -{sheet.negativeMarks} for incorrect
+                </p>
+                <Link href={`/test/${sheet.id}`}>
+                  <Button className="w-full">
+                    Take Test
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-              <Link href={`/test/${sheet.id}`}>
-                <Button>
-                  Take Test
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
