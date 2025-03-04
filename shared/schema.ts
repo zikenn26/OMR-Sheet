@@ -9,6 +9,8 @@ export const sheets = pgTable("sheets", {
   startIndex: integer("start_index").notNull(),
   endIndex: integer("end_index").notNull(),
   timeLimit: integer("time_limit").notNull(), // in minutes
+  correctMarks: integer("correct_marks").notNull(),
+  negativeMarks: integer("negative_marks").notNull(),
   questions: jsonb("questions").$type<Question[]>().notNull(),
   answerFile: text("answer_file"), // Store the uploaded file path
 });
@@ -42,6 +44,8 @@ export type ImageAnalysis = {
 export const insertSheetSchema = createInsertSchema(sheets).extend({
   startIndex: z.number().min(1, "Start index must be positive"),
   endIndex: z.number().min(1, "End index must be positive"),
+  correctMarks: z.number().min(0, "Correct marks cannot be negative"),
+  negativeMarks: z.number().min(0, "Negative marks cannot be negative"),
   questions: z.array(z.object({
     id: z.number(),
     correctAnswer: z.number().min(0).max(3)

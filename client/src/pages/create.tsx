@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trash2, Plus, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Create() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const [step, setStep] = useState<'setup' | 'answers'>('setup');
 
   const form = useForm<InsertSheet>({
     resolver: zodResolver(insertSheetSchema),
@@ -25,10 +27,9 @@ export default function Create() {
       startIndex: 1,
       endIndex: 10,
       timeLimit: 30,
-      questions: Array(10).fill(null).map((_, i) => ({
-        id: i + 1,
-        correctAnswer: 0
-      }))
+      correctMarks: 1,
+      negativeMarks: 0.33,
+      questions: []
     }
   });
 
@@ -47,6 +48,13 @@ export default function Create() {
     replace(questions);
   };
 
+  const handleNext = form.handleSubmit((data) => {
+    if (step === 'setup') {
+      handleRangeChange(data.startIndex, data.endIndex);
+      setStep('answers');
+    }
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: InsertSheet) => {
       const res = await apiRequest("POST", "/api/sheets", data);
@@ -61,132 +69,171 @@ export default function Create() {
     }
   });
 
+  if (step === 'setup') {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Test</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={handleNext} className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="startIndex"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Index</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            onChange={(e) => field.onChange(+e.target.value)} 
+                            min={1} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="endIndex"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Index</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            {...field} 
+                            onChange={(e) => field.onChange(+e.target.value)} 
+                            min={1} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="timeLimit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Time Limit (minutes)</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} min={1} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="correctMarks"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marks for Correct Answer</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} min={0} step={0.01} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="negativeMarks"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Negative Marking</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} min={0} step={0.01} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <Button type="submit" className="w-full">
+                  Next: Provide Answer Key
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>Create Test</CardTitle>
+          <CardTitle>Provide Answer Key</CardTitle>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(data => createMutation.mutate(data))} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="startIndex"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Index</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          onChange={(e) => {
-                            const value = +e.target.value;
-                            field.onChange(value);
-                            handleRangeChange(value, form.getValues("endIndex"));
-                          }} 
-                          min={1} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="endIndex"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Index</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          {...field} 
-                          onChange={(e) => {
-                            const value = +e.target.value;
-                            field.onChange(value);
-                            handleRangeChange(form.getValues("startIndex"), value);
-                          }} 
-                          min={1} 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="timeLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Time Limit (minutes)</FormLabel>
-                    <FormControl>
-                      <Input type="number" {...field} onChange={(e) => field.onChange(+e.target.value)} min={1} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div>
-                <FormLabel>Answer File (Optional)</FormLabel>
-                <div className="mt-2">
-                  <Button type="button" variant="outline" className="w-full">
-                    <input
-                      type="file"
-                      className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                      accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Handle file upload and answer extraction
-                          toast({
-                            title: "File Upload",
-                            description: "Answer extraction from files will be implemented soon"
-                          });
-                        }
-                      }}
-                    />
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Answer File
-                  </Button>
-                </div>
-              </div>
+                <Button type="button" variant="outline" className="w-full mb-6">
+                  <input
+                    type="file"
+                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                    accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // Handle file upload and answer extraction
+                        toast({
+                          title: "File Upload",
+                          description: "Answer extraction from files will be implemented soon"
+                        });
+                      }
+                    }}
+                  />
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Answer File
+                </Button>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Questions</h3>
+                <p className="text-center text-muted-foreground mb-6">- OR -</p>
+
                 <div className="grid gap-4 md:grid-cols-2">
                   {fields.map((field, index) => (
                     <Card key={field.id}>
@@ -236,13 +283,14 @@ export default function Create() {
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={createMutation.isPending}
-              >
-                Create Test
-              </Button>
+              <div className="flex gap-4">
+                <Button type="button" variant="outline" className="w-full" onClick={() => setStep('setup')}>
+                  Back
+                </Button>
+                <Button type="submit" className="w-full" disabled={createMutation.isPending}>
+                  Create Test
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>
