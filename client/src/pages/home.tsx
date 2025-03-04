@@ -45,9 +45,7 @@ export default function Home() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Available Tests</h1>
         <Link href="/create">
-          <Button>
-            Create New Test
-          </Button>
+          <Button>Create New Test</Button>
         </Link>
       </div>
 
