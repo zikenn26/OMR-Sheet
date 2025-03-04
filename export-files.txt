@@ -1,0 +1,29 @@
+Required files for local setup:
+
+Frontend:
+- client/src/**/*.tsx
+- client/src/**/*.ts
+- client/src/**/*.css
+- client/index.html
+
+Backend:
+- server/**/*.ts
+- shared/**/*.ts
+
+Configuration:
+- package.json
+- tsconfig.json
+- postcss.config.js
+- tailwind.config.ts
+- vite.config.ts
+- theme.json
+
+Instructions:
+1. Create directories for each path listed above
+2. Copy all files maintaining the directory structure
+3. Follow the README.md instructions to run the application locally
+
+Note: 
+- All dependencies are listed in package.json
+- The application uses in-memory storage, so no database setup is required
+- Make sure Node.js is installed on your system before running npm install
