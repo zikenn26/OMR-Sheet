@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute } from "wouter";
 import { Sheet, Attempt } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Upload } from "lucide-react";
@@ -18,6 +17,7 @@ export default function Results() {
   const [answerKey, setAnswerKey] = useState<number[]>([]);
   const [isEvaluated, setIsEvaluated] = useState(false);
   const [score, setScore] = useState<number | null>(null);
+  const [showFileUpload, setShowFileUpload] = useState(true);
 
   const { data: attempt, isLoading: loadingAttempt } = useQuery<Attempt>({
     queryKey: [`/api/attempts/${params?.id}`]
@@ -84,69 +84,73 @@ export default function Results() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <Button variant="outline" className="w-full">
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                  accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
-                  }}
-                />
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Answer File
-              </Button>
+              {showFileUpload ? (
+                <>
+                  <Button variant="outline" className="w-full" onClick={() => setShowFileUpload(false)}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Answer File
+                  </Button>
+                  <p className="text-center text-muted-foreground">- OR -</p>
+                  <Button className="w-full" onClick={() => setShowFileUpload(false)}>
+                    Enter Answers Manually
+                  </Button>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {sheet.questions.map((question, index) => (
+                      <Card key={question.id}>
+                        <CardContent className="pt-6">
+                          <h3 className="text-lg font-medium mb-4">
+                            Question {question.id}
+                          </h3>
 
-              <p className="text-center text-muted-foreground">- OR -</p>
+                          <RadioGroup
+                            value={answerKey[index]?.toString()}
+                            onValueChange={(value) => {
+                              const newAnswerKey = [...answerKey];
+                              newAnswerKey[index] = parseInt(value);
+                              setAnswerKey(newAnswerKey);
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="0" id={`q${index}-a`} />
+                                <Label htmlFor={`q${index}-a`}>A</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="1" id={`q${index}-b`} />
+                                <Label htmlFor={`q${index}-b`}>B</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="2" id={`q${index}-c`} />
+                                <Label htmlFor={`q${index}-c`}>C</Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="3" id={`q${index}-d`} />
+                                <Label htmlFor={`q${index}-d`}>D</Label>
+                              </div>
+                            </div>
+                          </RadioGroup>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                {sheet.questions.map((question, index) => (
-                  <Card key={question.id}>
-                    <CardContent className="pt-6">
-                      <h3 className="text-lg font-medium mb-4">
-                        Question {question.id}
-                      </h3>
-
-                      <RadioGroup
-                        value={answerKey[index]?.toString()}
-                        onValueChange={(value) => {
-                          const newAnswerKey = [...answerKey];
-                          newAnswerKey[index] = parseInt(value);
-                          setAnswerKey(newAnswerKey);
-                        }}
-                      >
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="0" id={`q${index}-a`} />
-                            <Label htmlFor={`q${index}-a`}>A</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="1" id={`q${index}-b`} />
-                            <Label htmlFor={`q${index}-b`}>B</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="2" id={`q${index}-c`} />
-                            <Label htmlFor={`q${index}-c`}>C</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="3" id={`q${index}-d`} />
-                            <Label htmlFor={`q${index}-d`}>D</Label>
-                          </div>
-                        </div>
-                      </RadioGroup>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <Button 
-                onClick={evaluateTest}
-                className="w-full"
-                disabled={answerKey.length !== sheet.questions.length}
-              >
-                Evaluate Test
-              </Button>
+                  <div className="flex gap-4">
+                    <Button variant="outline" className="w-full" onClick={() => setShowFileUpload(true)}>
+                      Back
+                    </Button>
+                    <Button 
+                      onClick={evaluateTest}
+                      className="w-full"
+                      disabled={answerKey.length !== sheet.questions.length}
+                    >
+                      Evaluate Test
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
