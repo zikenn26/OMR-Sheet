@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Timer from "@/components/timer";
-import ImageAnalysis from "@/components/image-analysis";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -67,10 +66,6 @@ export default function TakeTest() {
     });
   };
 
-  const handleImageAnalysis = (questionId: number, result: { suggestedAnswer: number }) => {
-    handleAnswer(questionId, result.suggestedAnswer);
-  };
-
   if (isLoading) {
     return (
       <Card>
@@ -104,6 +99,7 @@ export default function TakeTest() {
         <CardContent>
           <p className="mb-4">{sheet.description}</p>
           <p className="text-muted-foreground mb-6">
+            Questions: {sheet.startIndex} - {sheet.endIndex}<br />
             Time limit: {sheet.timeLimit} minutes
           </p>
           <Button onClick={handleStart}>Start Test</Button>
@@ -122,33 +118,41 @@ export default function TakeTest() {
         />
       </div>
 
-      {sheet.questions.map((question, index) => (
-        <Card key={question.id}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-medium">
-                Question {index + 1}: {question.text}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {sheet.questions.map((question) => (
+          <Card key={question.id}>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-4">
+                Question {question.id}
               </h3>
-              <ImageAnalysis
-                questionId={question.id}
-                onAnalysis={(result) => handleImageAnalysis(question.id, result)}
-              />
-            </div>
 
-            <RadioGroup
-              value={answers.find(a => a.questionId === question.id)?.selectedOption.toString()}
-              onValueChange={(value) => handleAnswer(question.id, Number(value))}
-            >
-              {question.options.map((option, optionIndex) => (
-                <div key={optionIndex} className="flex items-center space-x-2">
-                  <RadioGroupItem value={optionIndex.toString()} id={`q${question.id}-o${optionIndex}`} />
-                  <Label htmlFor={`q${question.id}-o${optionIndex}`}>{option}</Label>
+              <RadioGroup
+                value={answers.find(a => a.questionId === question.id)?.selectedOption.toString()}
+                onValueChange={(value) => handleAnswer(question.id, Number(value))}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="0" id={`q${question.id}-a`} />
+                    <Label htmlFor={`q${question.id}-a`}>A</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="1" id={`q${question.id}-b`} />
+                    <Label htmlFor={`q${question.id}-b`}>B</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="2" id={`q${question.id}-c`} />
+                    <Label htmlFor={`q${question.id}-c`}>C</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="3" id={`q${question.id}-d`} />
+                    <Label htmlFor={`q${question.id}-d`}>D</Label>
+                  </div>
                 </div>
-              ))}
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      ))}
+              </RadioGroup>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       <Button
         className="w-full"

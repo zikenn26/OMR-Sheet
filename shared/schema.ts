@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,8 +6,11 @@ export const sheets = pgTable("sheets", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  startIndex: integer("start_index").notNull(),
+  endIndex: integer("end_index").notNull(),
   timeLimit: integer("time_limit").notNull(), // in minutes
   questions: jsonb("questions").$type<Question[]>().notNull(),
+  answerFile: text("answer_file"), // Store the uploaded file path
 });
 
 export const attempts = pgTable("attempts", {
@@ -22,35 +25,33 @@ export const attempts = pgTable("attempts", {
 
 export type Question = {
   id: number;
-  text: string;
-  options: string[];
-  correctAnswer: number;
+  correctAnswer: 0 | 1 | 2 | 3; // 0=A, 1=B, 2=C, 3=D
 };
 
 export type Answer = {
   questionId: number;
-  selectedOption: number;
+  selectedOption: 0 | 1 | 2 | 3;
 };
 
 export type ImageAnalysis = {
   questionId: number;
   confidence: number;
-  suggestedAnswer: number;
+  suggestedAnswer: 0 | 1 | 2 | 3;
 };
 
 export const insertSheetSchema = createInsertSchema(sheets).extend({
+  startIndex: z.number().min(1, "Start index must be positive"),
+  endIndex: z.number().min(1, "End index must be positive"),
   questions: z.array(z.object({
     id: z.number(),
-    text: z.string().min(1, "Question text is required"),
-    options: z.array(z.string()).min(2, "At least 2 options required"),
-    correctAnswer: z.number().min(0)
+    correctAnswer: z.number().min(0).max(3)
   }))
 });
 
 export const insertAttemptSchema = createInsertSchema(attempts).extend({
   answers: z.array(z.object({
     questionId: z.number(),
-    selectedOption: z.number()
+    selectedOption: z.number().min(0).max(3)
   }))
 });
 
